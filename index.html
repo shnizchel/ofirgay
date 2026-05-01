@@ -1,100 +1,172 @@
-```html
-<script type="text/babel">
-  const tripDays = [
-    {
-      day: 1,
-      date: "11.07",
-      title: "מילאנו",
-      stops: [
-        { time: "22:10", title: "הגעה למילאנו" },
-        { title: "ישנים" }
-      ]
-    },
-    {
-      day: 2,
-      date: "12.07",
-      title: "אגם ראשון",
-      stops: [
-        { time: "16:30", title: "KFC" },
-        { title: "מלון" }
-      ]
-    },
-    {
-      day: 3,
-      date: "13.07",
-      title: "גארדלנד",
-      stops: [
-        { time: "10:00", title: "פארק" },
-        { title: "מלון" }
-      ]
-    },
-    {
-      day: 4,
-      date: "14.07",
-      title: "רומא",
-      stops: [
-        { time: "12:00", title: "נסיעה" },
-        { title: "מלון" }
-      ]
-    },
-    {
-      day: 5,
-      date: "15.07",
-      title: "רומא",
-      stops: [
-        { time: "10:00", title: "טיול בעיר" }
-      ]
-    },
-    {
-      day: 6,
-      date: "16.07",
-      title: "רומא",
-      stops: [
-        { time: "10:00", title: "אטרקציות" }
-      ]
-    },
-    {
-      day: 7,
-      date: "17.07",
-      title: "טיסה",
-      stops: [
-        { time: "05:30", title: "טיסה חזרה" }
-      ]
-    }
-  ];
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מסלול טיול</title>
+    
+    <!-- טעינת ספריות React ו-Babel מהרשת -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  function App() {
-    return (
-      <main className="app">
-        <header className="header">
-          <h1>מסלול הטיול</h1>
-          <p>תכנון לפי ימים</p>
-        </header>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .day-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .day-top {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 0.9em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .title {
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        .stops {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .stop {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .time {
+            background: #e1f5fe;
+            color: #0288d1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .stop-title {
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-        {tripDays.map((day) => (
-          <section className="day-card" key={day.day}>
-            <div className="day-top">
-              <span className="day-number">יום {day.day}</span>
-              <span className="date">{day.date}</span>
-            </div>
+    <script type="text/babel">
+        const tripDays = [
+            {
+                day: 1,
+                date: "11.07",
+                title: "מילאנו",
+                stops: [
+                    { time: "22:10", title: "הגעה למילאנו" },
+                    { title: "ישנים" }
+                ]
+            },
+            {
+                day: 2,
+                date: "12.07",
+                title: "אגם ראשון",
+                stops: [
+                    { time: "16:30", title: "KFC" },
+                    { title: "מלון" }
+                ]
+            },
+            {
+                day: 3,
+                date: "13.07",
+                title: "גארדלנד",
+                stops: [
+                    { time: "10:00", title: "פארק" },
+                    { title: "מלון" }
+                ]
+            },
+            {
+                day: 4,
+                date: "14.07",
+                title: "רומא",
+                stops: [
+                    { time: "12:00", title: "נסיעה" },
+                    { title: "מלון" }
+                ]
+            },
+            {
+                day: 5,
+                date: "15.07",
+                title: "רומא",
+                stops: [
+                    { time: "10:00", title: "טיול בעיר" }
+                ]
+            },
+            {
+                day: 6,
+                date: "16.07",
+                title: "רומא",
+                stops: [
+                    { time: "10:00", title: "אטרקציות" }
+                ]
+            },
+            {
+                day: 7,
+                date: "17.07",
+                title: "טיסה",
+                stops: [
+                    { time: "05:30", title: "טיסה חזרה" }
+                ]
+            }
+        ];
 
-            <h2 className="title">{day.title}</h2>
+        function App() {
+            return (
+                <main className="app">
+                    <header className="header">
+                        <h1>מסלול הטיול</h1>
+                        <p>תכנון לפי ימים</p>
+                    </header>
 
-            <div className="stops">
-              {day.stops.map((stop, index) => (
-                <div className="stop" key={index}>
-                  {stop.time && <span className="time">{stop.time}</span>}
-                  <span className="stop-title">{stop.title}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
-      </main>
-    );
-  }
+                    {tripDays.map((day) => (
+                        <section className="day-card" key={day.day}>
+                            <div className="day-top">
+                                <span className="day-number">יום {day.day}</span>
+                                <span className="date">{day.date}</span>
+                            </div>
 
-  const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(<App />);
-</script>
-```
+                            <h2 className="title">{day.title}</h2>
+
+                            <div className="stops">
+                                {day.stops.map((stop, index) => (
+                                    <div className="stop" key={index}>
+                                        {stop.time && <span className="time">{stop.time}</span>}
+                                        <span className="stop-title">{stop.title}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    ))}
+                </main>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<App />);
+    </script>
+</body>
+</html>

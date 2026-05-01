@@ -1,88 +1,100 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>מסלול טיול</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מסלול מילאנו</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   direction: rtl;
-  background: linear-gradient(#dbeafe,#fdf2f8);
+  background: linear-gradient(#dbeafe, #fdf2f8);
+  color: #1f2937;
 }
 
 .app {
-  max-width: 620px;
+  max-width: 680px;
   margin: auto;
   padding: 20px;
 }
 
 .hero {
-  background: linear-gradient(135deg,#2563eb,#ec4899);
+  background: linear-gradient(135deg, #2563eb, #ec4899);
   color: white;
-  padding: 25px;
-  border-radius: 25px;
+  padding: 26px;
+  border-radius: 26px;
   margin-bottom: 20px;
 }
 
 .day-card {
   background: white;
-  border-radius: 20px;
+  border-radius: 22px;
   padding: 16px;
-  margin-bottom: 20px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
 .day-top {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.day-number,
+.date {
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-weight: bold;
 }
 
 .day-number {
   background: #f97316;
   color: white;
-  padding: 6px 12px;
-  border-radius: 999px;
 }
 
 .date {
   background: #eef2ff;
-  padding: 6px 12px;
-  border-radius: 999px;
+  color: #4338ca;
 }
 
 .stop {
   display: flex;
   gap: 10px;
   background: #fff7ed;
-  border-radius: 14px;
-  padding: 10px;
-  margin-bottom: 8px;
+  border: 1px solid #fed7aa;
+  border-radius: 15px;
+  padding: 11px;
+  margin-bottom: 9px;
   cursor: pointer;
   transition: 0.2s;
 }
 
-.stop:hover {
+.stop:hover,
+.stop.active {
   background: #eef2ff;
+  border-color: #60a5fa;
 }
 
 .time {
   background: #2563eb;
   color: white;
-  padding: 4px 8px;
-  border-radius: 8px;
+  padding: 5px 8px;
+  border-radius: 9px;
   font-size: 12px;
-  min-width: 90px;
+  min-width: 96px;
   text-align: center;
+  height: fit-content;
+  flex-shrink: 0;
 }
 
 .stop-text strong {
   display: block;
+  font-size: 15px;
 }
 
 .stop-text small {
@@ -93,20 +105,64 @@ body {
   line-height: 1.4;
 }
 
+.map-actions {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+
+button {
+  border: none;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.location-btn { background: #16a34a; }
+.route-btn { background: #2563eb; }
+
 .map {
-  height: 260px;
-  margin-top: 10px;
-  border-radius: 15px;
+  height: 340px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.custom-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+.custom-marker.active {
+  background: #dc2626;
+  width: 34px;
+  height: 34px;
+  font-size: 14px;
+}
+
+.user-marker {
+  background: #0ea5e9;
 }
 </style>
 </head>
 
 <body>
-
 <div class="app">
   <div class="hero">
     <h1>✈️ מסלול הטיול</h1>
-    <p>מילאנו - יום מלא</p>
+    <p>מילאנו · יום מלא · מפה מדויקת</p>
   </div>
 
   <div id="days"></div>
@@ -117,104 +173,233 @@ body {
 <script>
 const maps = {};
 const markers = {};
+const userMarkers = {};
 let lastMarker = null;
+let lastMarkerInfo = null;
+let lastStopElement = null;
 
 const tripDays = [
-{
-  day: 2,
-  date: "12.07",
-  title: "מילאנו - יום מלא",
-  stops: [
-    {
-      timeRange: "10:00–12:00",
-      title: "CityLife Shopping District",
-      description: "מתחילים את הבוקר בקניון המודרני ובמתחם המגדלים.",
-      lat: 45.4777, lng: 9.1566
-    },
-    {
-      timeRange: "12:00–12:30",
-      title: "נסיעה ל-Arco della Pace",
-      description: "מעבר לאזור המרכזי של היום.",
-      lat: 45.4758, lng: 9.1722
-    },
-    {
-      timeRange: "12:30–14:00",
-      title: "פארק סמפיונה והאקווריום",
-      description: "הליכה בפארק וביקור באקווריום.",
-      lat: 45.4722, lng: 9.1780
-    },
-    {
-      timeRange: "14:00–15:00",
-      title: "Five Guys",
-      description: "ארוחת צהריים והמבורגר.",
-      lat: 45.4668, lng: 9.1848
-    },
-    {
-      timeRange: "15:00–15:30",
-      title: "פסל L.O.V.E",
-      description: "עצירה קצרה לצילום.",
-      lat: 45.4655, lng: 9.1834
-    },
-    {
-      timeRange: "15:30–17:30",
-      title: "LEGO Store",
-      description: "עצירת קניות בדרך לדואומו.",
-      lat: 45.4659, lng: 9.1848
-    },
-    {
-      timeRange: "15:30–17:30",
-      title: "Uniqlo",
-      description: "עצירת קניות נוספת.",
-      lat: 45.4659, lng: 9.1857
-    },
-    {
-      timeRange: "17:30–20:00",
-      title: "דואומו והגלריה",
-      description: "שיא היום.",
-      lat: 45.4642, lng: 9.1900
-    },
-    {
-      timeRange: "20:00–21:00",
-      title: "KFC",
-      description: "עצירת אוכל אם רעבים.",
-      lat: 45.4636, lng: 9.1912
-    },
-    {
-      timeRange: "21:00 ואילך",
-      title: "Primark",
-      description: "קניות וסיום היום.",
-      lat: 45.4645, lng: 9.1895
-    },
-    {
-      timeRange: "בסוף היום",
-      title: "חזרה למלון",
-      description: "חזרה למלון אחרי Primark.",
-      lat: 45.4863, lng: 9.2387
-    }
-  ]
-}
+  {
+    day: 2,
+    date: "12.07",
+    title: "מילאנו - יום מלא",
+    stops: [
+      {
+        timeRange: "10:00–12:00",
+        title: "CityLife Shopping District",
+        description: "מתחילים את הבוקר בקניון המודרני ובמתחם המגדלים.",
+        lat: 45.4780848238576,
+        lng: 9.156251250701095
+      },
+      {
+        timeRange: "12:00–12:30",
+        title: "Arco della Pace",
+        description: "עצירה קצרה לצילום בקשת השלום והתחלת המסלול בפארק.",
+        lat: 45.47617418186092,
+        lng: 9.17294492737035
+      },
+      {
+        timeRange: "12:30–13:30",
+        title: "פארק סמפיונה",
+        description: "כניסה לפארק, הליכה רגועה ונופים יפים.",
+        lat: 45.4724425898349,
+        lng: 9.178953075268625
+      },
+      {
+        timeRange: "13:30–14:00",
+        title: "Acquario Civico",
+        description: "ביקור באקווריום שנמצא בתוך פארק סמפיונה.",
+        lat: 45.474073914897666,
+        lng: 9.180981356638398
+      },
+      {
+        timeRange: "14:00–14:30",
+        title: "Castello Sforzesco",
+        description: "סיום החלק הירוק של היום במצודה המרשימה.",
+        lat: 45.47052134327752,
+        lng: 9.179769700164934
+      },
+      {
+        timeRange: "14:30–15:00",
+        title: "Five Guys",
+        description: "ארוחת צהריים והמבורגר לפני שממשיכים לקניות.",
+        lat: 45.46660007064746,
+        lng: 9.18430671599612
+      },
+      {
+        timeRange: "15:00–15:30",
+        title: "פסל L.O.V.E",
+        description: "עצירה קצרה ליד הבורסה של מילאנו לראות את הפסל המפורסם.",
+        lat: 45.464492252501564,
+        lng: 9.183593827496498
+      },
+      {
+        timeRange: "15:30–16:15",
+        title: "LEGO® Certified Store Dante",
+        description: "עצירת קניות בדרך לדואומו, על Via Dante.",
+        lat: 45.46622110948728,
+        lng: 9.185447398986543
+      },
+      {
+        timeRange: "16:15–17:30",
+        title: "Uniqlo Piazza Cordusio",
+        description: "עצירת קניות נוספת בכיכר קורדוסיו.",
+        lat: 45.465227873258115,
+        lng: 9.185554687341869
+      },
+      {
+        timeRange: "17:30–18:30",
+        title: "גלריית ויטוריו עמנואלה השני",
+        description: "ביקור בגלריה ההיסטורית והיפה של מילאנו.",
+        lat: 45.46664188113611,
+        lng: 9.192559976112044
+      },
+      {
+        timeRange: "18:30–19:30",
+        title: "HIGHLINE Milano",
+        description: "תצפית יפה על גגות העיר ואזור הדואומו.",
+        lat: 45.46682572915688,
+        lng: 9.190810929165401
+      },
+      {
+        timeRange: "20:00–21:00",
+        title: "KFC",
+        description: "עצירת אוכל אם רעבים.",
+        lat: 45.464524680901185,
+        lng: 9.187724193784574
+      },
+      {
+        timeRange: "21:00 ואילך",
+        title: "Primark",
+        description: "קניות וסיום היום.",
+        lat: 45.461470950896526,
+        lng: 9.185720726020254
+      },
+      {
+        timeRange: "סוף היום",
+        title: "MEININGER Milano Lambrate",
+        description: "חזרה למלון אחרי יום מלא בעיר.",
+        lat: 45.48848265419157,
+        lng: 9.245903753421304,
+        isHotel: true
+      }
+    ]
+  }
 ];
 
-function focusOnPoint(day,index){
+function makeNumberIcon(number, active = false, user = false) {
+  return L.divIcon({
+    className: "",
+    html: `<div class="custom-marker ${active ? "active" : ""} ${user ? "user-marker" : ""}">${number}</div>`,
+    iconSize: active ? [34, 34] : [28, 28],
+    iconAnchor: active ? [17, 17] : [14, 14]
+  });
+}
+
+function focusOnPoint(day, index) {
   const marker = markers[day][index];
   const map = maps[day];
 
-  if(lastMarker) lastMarker.setOpacity(1);
+  if (lastMarker && lastMarkerInfo) {
+    lastMarker.setIcon(makeNumberIcon(lastMarkerInfo.index + 1));
+  }
 
-  marker.setOpacity(0.6);
+  marker.setIcon(makeNumberIcon(index + 1, true));
   lastMarker = marker;
+  lastMarkerInfo = { day, index };
 
-  map.setView(marker.getLatLng(),16);
-  marker.openPopup();
+  if (lastStopElement) {
+    lastStopElement.classList.remove("active");
+  }
+
+  const stopElement = document.getElementById(`stop-${day}-${index}`);
+  stopElement.classList.add("active");
+  lastStopElement = stopElement;
+
+  document.getElementById(`map-${day}`).scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  setTimeout(() => {
+    map.invalidateSize();
+    map.setView(marker.getLatLng(), 18);
+    marker.openPopup();
+  }, 450);
+}
+
+function showCityArea(day) {
+  const map = maps[day];
+  const dayData = tripDays.find(d => d.day === day);
+  const cityPoints = dayData.stops
+    .filter(s => !s.isHotel)
+    .map(s => [s.lat, s.lng]);
+
+  map.fitBounds(cityPoints, {
+    padding: [35, 35],
+    maxZoom: 16
+  });
+}
+
+function showFullRoute(day) {
+  const map = maps[day];
+  const dayData = tripDays.find(d => d.day === day);
+  const allPoints = dayData.stops.map(s => [s.lat, s.lng]);
+
+  map.fitBounds(allPoints, {
+    padding: [35, 35],
+    maxZoom: 14
+  });
+
+  document.getElementById(`map-${day}`).scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+function showMyLocation(day) {
+  const map = maps[day];
+
+  if (!navigator.geolocation) {
+    alert("הדפדפן שלך לא תומך בזיהוי מיקום.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      if (userMarkers[day]) {
+        userMarkers[day].setLatLng([lat, lng]);
+      } else {
+        userMarkers[day] = L.marker([lat, lng], {
+          icon: makeNumberIcon("אני", false, true)
+        })
+        .addTo(map)
+        .bindPopup("📍 אתה כאן");
+      }
+
+      userMarkers[day].openPopup();
+      map.setView([lat, lng], 18);
+
+      document.getElementById(`map-${day}`).scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    },
+    () => alert("לא הצלחתי לקבל את המיקום. ודא שאישרת הרשאת מיקום בדפדפן."),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
 }
 
 const container = document.getElementById("days");
 
-tripDays.forEach(day=>{
-  const el=document.createElement("div");
-  el.className="day-card";
+tripDays.forEach(day => {
+  const el = document.createElement("section");
+  el.className = "day-card";
 
-  el.innerHTML=`
+  el.innerHTML = `
     <div class="day-top">
       <span class="day-number">יום ${day.day}</span>
       <span class="date">${day.date}</span>
@@ -222,39 +407,62 @@ tripDays.forEach(day=>{
 
     <h2>${day.title}</h2>
 
-    ${day.stops.map((s,i)=>`
-      <div class="stop" onclick="focusOnPoint(${day.day},${i})">
+    ${day.stops.map((s, i) => `
+      <div class="stop" id="stop-${day.day}-${i}" onclick="focusOnPoint(${day.day}, ${i})">
         <span class="time">${s.timeRange}</span>
         <span class="stop-text">
-          <strong>${s.title}</strong>
+          <strong>${i + 1}. ${s.title}</strong>
           <small>${s.description}</small>
         </span>
       </div>
     `).join("")}
+
+    <div class="map-actions">
+      <button class="location-btn" onclick="showMyLocation(${day.day})">📍 איפה אני עכשיו?</button>
+      <button class="route-btn" onclick="showCityArea(${day.day})">🏙️ הצג אזור מרכז העיר</button>
+      <button class="route-btn" onclick="showFullRoute(${day.day})">🧭 הצג הכל כולל המלון</button>
+    </div>
 
     <div class="map" id="map-${day.day}"></div>
   `;
 
   container.appendChild(el);
 
-  const map=L.map(`map-${day.day}`);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-
-  maps[day.day]=map;
-  markers[day.day]=[];
-
-  const pts=[];
-
-  day.stops.forEach((s,i)=>{
-    const marker=L.marker([s.lat,s.lng]).addTo(map).bindPopup(s.title);
-    markers[day.day].push(marker);
-    pts.push([s.lat,s.lng]);
+  const map = L.map(`map-${day.day}`, {
+    scrollWheelZoom: false
   });
 
-  L.polyline(pts).addTo(map);
-  map.fitBounds(pts);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
+
+  maps[day.day] = map;
+  markers[day.day] = [];
+
+  const allPoints = day.stops.map(s => [s.lat, s.lng]);
+  const cityPoints = day.stops.filter(s => !s.isHotel).map(s => [s.lat, s.lng]);
+
+  day.stops.forEach((s, i) => {
+    const marker = L.marker([s.lat, s.lng], {
+      icon: makeNumberIcon(i + 1)
+    })
+    .addTo(map)
+    .bindPopup(`<b>${i + 1}. ${s.title}</b><br>${s.description}`);
+
+    markers[day.day].push(marker);
+  });
+
+  L.polyline(allPoints, {
+    weight: 4,
+    opacity: 0.75,
+    dashArray: "7, 7"
+  }).addTo(map);
+
+  map.fitBounds(cityPoints, {
+    padding: [35, 35],
+    maxZoom: 16
+  });
 });
 </script>
-
 </body>
 </html>
